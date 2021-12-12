@@ -2,7 +2,7 @@
 ---- BENCHMARKING WITH DIFFERENT DISTRIBUTIONS ------
 -----------------------------------------------------
 
--- Fixed variables: table size(1000 rows) and range type (int8range)
+-- Fixed variables: table size(1000 rows), range type (int8range), range size (bounds between 1 and 500)
 -- variable that changes: distribution (normal, left-aligned, right-aligned)
 
 -- Analyze all tables

@@ -57,35 +57,31 @@ BEGIN
 END;
 $$ language 'plpgsql' STRICT;
 
--- Function to generate random tsrange (timestamp range) b/w low and high timestamp
-CREATE OR REPLACE FUNCTION random_timestamp(i INT) 
+-- Function to generate random tsrange (timestamp range) between now - low (days) and now + high (days)
+CREATE OR REPLACE FUNCTION random_tsrange(low INT, high INT) 
    RETURNS tsrange AS
 $$
 DECLARE
-   low timestamp := (now()::timestamp + (random() * ((TIMESTAMP 'epoch' + (tres_random_interval(i, 4, 5, 6))) - (TIMESTAMP 'epoch' + (tres_random_interval(i, 1, 2, 3))) )));
-   high timestamp := (now()::timestamp + (random() * ((TIMESTAMP 'epoch' + (tres_random_interval(i, 4, 5, 6))) - (TIMESTAMP 'epoch' + (tres_random_interval(i, 1, 2, 3))) )));
+   rand_low int := random_int(-abs(low), 0);
+   rand_high int := random_int(0, abs(high));
+   b1 timestamp := now() - make_interval(days => abs(low)) - make_interval(secs => random_int(0, 86000));
+   b2 timestamp := now() + make_interval(days => abs(high)) + make_interval(secs => random_int(0, 86000));
 BEGIN
-   if (low > high) then 
-      return tsrange(high, low); 
-   else 
-      return tsrange(low, high); 
-   end if;
+   return tsrange(b1, b2); 
 END;
 $$ language 'plpgsql' STRICT;
 
--- Function to generate random date range b/w low and high date
-CREATE OR REPLACE FUNCTION random_date(i INT) 
+-- Function to generate random date range between now - low (days) and now + high (days)
+CREATE OR REPLACE FUNCTION random_daterange(low INT, high INT) 
    RETURNS daterange AS
 $$
 DECLARE
-   low date := (now()::timestamp + (random_int( random_int(0, i), random_int(i + 1, i*2) )::text || ' days')::interval)::date;
-   high date := (now()::timestamp + (random_int( random_int(i*3, i*4), random_int((i*4) + 1, i*8) )::text || ' days')::interval)::date;
+   rand_low int := random_int(-abs(low), 0);
+   rand_high int := random_int(0, abs(high));
+   b1 date := now() - make_interval(days => abs(low));
+   b2 date := now() + make_interval(days => abs(high));
 BEGIN
-   if (low > high) then 
-      return daterange(high, low); 
-   else 
-      return daterange(low, high); 
-   end if;
+  return daterange(b1, b2); 
 END;
 $$ language 'plpgsql' STRICT;
 
@@ -101,6 +97,7 @@ $$ language 'plpgsql' STRICT;
 
 DROP TABLE IF EXISTS normal_dist_1000_a;
 DROP TABLE IF EXISTS normal_dist_1000_b;
+
 DROP TABLE IF EXISTS left_dist_1000_a;
 DROP TABLE IF EXISTS left_dist_1000_b;
 DROP TABLE IF EXISTS right_dist_1000_a;
@@ -108,163 +105,78 @@ DROP TABLE IF EXISTS right_dist_1000_b;
 
 DROP TABLE IF EXISTS normal_dist_10k_a;
 DROP TABLE IF EXISTS normal_dist_10k_b;
-DROP TABLE IF EXISTS left_dist_10k_a;
-DROP TABLE IF EXISTS left_dist_10k_b;
-DROP TABLE IF EXISTS right_dist_10k_a;
-DROP TABLE IF EXISTS right_dist_10k_b;
+
+DROP TABLE IF EXISTS normal_dist_1000_large_range_a;
+DROP TABLE IF EXISTS normal_dist_1000_large_range_b;
+
 
 CREATE TABLE normal_dist_1000_a (
 	id int,
 	integer_range int8range,
-	float_range numrange
---	timestamp_range tsrange,
---	date_range daterange
+	float_range numrange,
+	timestamp_range tsrange,
+	date_range daterange
 );
 
 CREATE TABLE normal_dist_1000_b (
 	id int,
 	integer_range int8range,
-	float_range numrange
---	timestamp_range tsrange,
---	date_range daterange
+	float_range numrange,
+	timestamp_range tsrange,
+	date_range daterange
 );
 
-CREATE TABLE left_dist_1000_a (
-	id int,
-	integer_range int8range,
-	float_range numrange
---	timestamp_range tsrange,
---	date_range daterange
-);
+CREATE TABLE left_dist_1000_a (	id int,	integer_range int8range);
+CREATE TABLE left_dist_1000_b (id int,	integer_range int8range);
+CREATE TABLE right_dist_1000_a (id int,	integer_range int8range);
+CREATE TABLE right_dist_1000_b (id int,	integer_range int8range);
 
-CREATE TABLE left_dist_1000_b (
-	id int,
-	integer_range int8range,
-	float_range numrange
---	timestamp_range tsrange,
---	date_range daterange
-);
+CREATE TABLE normal_dist_10k_a (id int,	integer_range int8range);
+CREATE TABLE normal_dist_10k_b (id int,	integer_range int8range);
 
-CREATE TABLE right_dist_1000_a (
-	id int,
-	integer_range int8range,
-	float_range numrange
---	timestamp_range tsrange,
---	date_range daterange
-);
-
-CREATE TABLE right_dist_1000_b (
-	id int,
-	integer_range int8range,
-	float_range numrange
---	timestamp_range tsrange,
---	date_range daterange
-);
-
-CREATE TABLE normal_dist_10k_a (
-	id int,
-	integer_range int8range,
-	float_range numrange
---	timestamp_range tsrange,
---	date_range daterange
-);
-
-CREATE TABLE normal_dist_10k_b (
-	id int,
-	integer_range int8range,
-	float_range numrange
---	timestamp_range tsrange,
---	date_range daterange
-);
-
-CREATE TABLE left_dist_10k_a (
-	id int,
-	integer_range int8range,
-	float_range numrange
---	timestamp_range tsrange,
---	date_range daterange
-);
-
-CREATE TABLE left_dist_10k_b (
-	id int,
-	integer_range int8range,
-	float_range numrange
---	timestamp_range tsrange,
---	date_range daterange
-);
-
-CREATE TABLE right_dist_10k_a (
-	id int,
-	integer_range int8range,
-	float_range numrange
---	timestamp_range tsrange,
---	date_range daterange
-);
-
-CREATE TABLE right_dist_10k_b (
-	id int,
-	integer_range int8range,
-	float_range numrange
---	timestamp_range tsrange,
---	date_range daterange
-);
-
+CREATE TABLE normal_dist_1000_large_range_a (id int, integer_range int8range);
+CREATE TABLE normal_dist_1000_large_range_b (id int, integer_range int8range);
 
 
 ---------------------------------------------------------------
 -------------------- POPULATE THE TABLES ----------------------
 ---------------------------------------------------------------
--- For 1000 rows tables first
--- normal distribution
-insert into normal_dist_1000_a select i, random_intrange(1, 500), random_numrange(1, 100) from generate_series(1, 1000) as i;
-insert into normal_dist_1000_b select i, random_intrange(1, 500), random_numrange(1, 100) from generate_series(1, 1000) as i;
+
+-- normal distribution, all types, small range size, 1k rows
+insert into normal_dist_1000_a 
+select i, random_intrange(1, 500), random_numrange(1, 500), random_tsrange(250, 250), random_daterange(250, 250)
+from generate_series(1, 1000) as i;
+
+insert into normal_dist_1000_b 
+select i, random_intrange(1, 500), random_numrange(1, 500), random_tsrange(250, 250), random_daterange(250, 250)
+from generate_series(1, 1000) as i;
 
 -- left-aligned distribution
-insert into left_dist_1000_a  select i, random_intrange(1, 100), random_numrange(1, 100) from generate_series(1, 400) as i;
-insert into left_dist_1000_a  select i, random_intrange(51, 200), random_numrange(51, 200) from generate_series(401, 700) as i;
-insert into left_dist_1000_a  select i, random_intrange(151, 350), random_numrange(151, 350) from generate_series(701, 900) as i;
-insert into left_dist_1000_a  select i, random_intrange(251, 500), random_numrange(251, 500) from generate_series(901, 1000) as i;
+insert into left_dist_1000_a  select i, random_intrange(1, 100) from generate_series(1, 400) as i;
+insert into left_dist_1000_a  select i, random_intrange(51, 200) from generate_series(401, 700) as i;
+insert into left_dist_1000_a  select i, random_intrange(151, 350) from generate_series(701, 900) as i;
+insert into left_dist_1000_a  select i, random_intrange(251, 500) from generate_series(901, 1000) as i;
 
-insert into left_dist_1000_b  select i, random_intrange(1, 100), random_numrange(1, 100) from generate_series(1, 400) as i;
-insert into left_dist_1000_b  select i, random_intrange(51, 200), random_numrange(51, 200) from generate_series(401, 700) as i;
-insert into left_dist_1000_b  select i, random_intrange(151, 350), random_numrange(151, 350) from generate_series(701, 900) as i;
-insert into left_dist_1000_b  select i, random_intrange(251, 500), random_numrange(251, 500) from generate_series(901, 1000) as i;
+insert into left_dist_1000_b  select i, random_intrange(1, 100) from generate_series(1, 400) as i;
+insert into left_dist_1000_b  select i, random_intrange(51, 200) from generate_series(401, 700) as i;
+insert into left_dist_1000_b  select i, random_intrange(151, 350) from generate_series(701, 900) as i;
+insert into left_dist_1000_b  select i, random_intrange(251, 500) from generate_series(901, 1000) as i;
 
 -- right-aligned distribution
-insert into right_dist_1000_a  select i, random_intrange(1, 250), random_numrange(1, 250) from generate_series(1, 100) as i;
-insert into right_dist_1000_a  select i, random_intrange(151, 350), random_numrange(151, 350) from generate_series(101, 300) as i;
-insert into right_dist_1000_a  select i, random_intrange(301, 450), random_numrange(301, 450) from generate_series(301, 600) as i;
-insert into right_dist_1000_a  select i, random_intrange(401, 500), random_numrange(401, 500) from generate_series(601, 1000) as i;
+insert into right_dist_1000_a  select i, random_intrange(1, 250) from generate_series(1, 100) as i;
+insert into right_dist_1000_a  select i, random_intrange(151, 350) from generate_series(101, 300) as i;
+insert into right_dist_1000_a  select i, random_intrange(301, 450) from generate_series(301, 600) as i;
+insert into right_dist_1000_a  select i, random_intrange(401, 500) from generate_series(601, 1000) as i;
 
-insert into right_dist_1000_b  select i, random_intrange(1, 250), random_numrange(1, 250) from generate_series(1, 100) as i;
-insert into right_dist_1000_b  select i, random_intrange(151, 350), random_numrange(151, 350) from generate_series(101, 300) as i;
-insert into right_dist_1000_b  select i, random_intrange(301, 450), random_numrange(301, 450) from generate_series(301, 600) as i;
-insert into right_dist_1000_b  select i, random_intrange(401, 500), random_numrange(401, 500) from generate_series(601, 1000) as i;
+insert into right_dist_1000_b  select i, random_intrange(1, 250) from generate_series(1, 100) as i;
+insert into right_dist_1000_b  select i, random_intrange(151, 350) from generate_series(101, 300) as i;
+insert into right_dist_1000_b  select i, random_intrange(301, 450) from generate_series(301, 600) as i;
+insert into right_dist_1000_b  select i, random_intrange(401, 500) from generate_series(601, 1000) as i;
 
 -- For 10k rows tables
--- normal distribution
-insert into normal_dist_10k_a select i, random_intrange(1, 500), random_numrange(1, 100) from generate_series(1, 10000) as i;
-insert into normal_dist_10k_b select i, random_intrange(1, 500), random_numrange(1, 100) from generate_series(1, 10000) as i;
- 
--- left-aligned distribution
-insert into left_dist_10k_a  select i, random_intrange(1, 100), random_numrange(1, 100) from generate_series(1, 4000) as i;
-insert into left_dist_10k_a  select i, random_intrange(51, 200), random_numrange(51, 200) from generate_series(4001, 7000) as i;
-insert into left_dist_10k_a  select i, random_intrange(151, 350), random_numrange(151, 350) from generate_series(7001, 9000) as i;
-insert into left_dist_10k_a  select i, random_intrange(251, 500), random_numrange(251, 500) from generate_series(9001, 10000) as i;
- 
-insert into left_dist_10k_b  select i, random_intrange(1, 100), random_numrange(1, 100) from generate_series(1, 4000) as i;
-insert into left_dist_10k_b  select i, random_intrange(51, 200), random_numrange(51, 200) from generate_series(4001, 7000) as i;
-insert into left_dist_10k_b  select i, random_intrange(151, 350), random_numrange(151, 350) from generate_series(7001, 9000) as i;
-insert into left_dist_10k_b  select i, random_intrange(251, 500), random_numrange(251, 500) from generate_series(9001, 10000) as i;
+insert into normal_dist_10k_a select i, random_intrange(1, 500) from generate_series(1, 10000) as i;
+insert into normal_dist_10k_b select i, random_intrange(1, 500) from generate_series(1, 10000) as i;
 
--- right-aligned distribution
-insert into right_dist_10k_a  select i, random_intrange(1, 250), random_numrange(1, 250) from generate_series(1, 1000) as i;
-insert into right_dist_10k_a  select i, random_intrange(151, 350), random_numrange(151, 350) from generate_series(1001, 3000) as i;
-insert into right_dist_10k_a  select i, random_intrange(301, 450), random_numrange(301, 450) from generate_series(3001, 6000) as i;
-insert into right_dist_10k_a  select i, random_intrange(401, 500), random_numrange(401, 500) from generate_series(6001, 10000) as i;
-
-insert into right_dist_10k_b  select i, random_intrange(1, 250), random_numrange(1, 250) from generate_series(1, 1000) as i;
-insert into right_dist_10k_b  select i, random_intrange(151, 350), random_numrange(151, 350) from generate_series(1001, 3000) as i;
-insert into right_dist_10k_b  select i, random_intrange(301, 450), random_numrange(301, 450) from generate_series(3001, 6000) as i;
-insert into right_dist_10k_b  select i, random_intrange(401, 500), random_numrange(401, 500) from generate_series(6001, 10000) as i;
-
+-- For large ranges
+insert into normal_dist_1000_large_range_a select i, random_intrange(1, 1000000) from generate_series(1, 1000) as i;
+insert into normal_dist_1000_large_range_b select i, random_intrange(1, 1000000) from generate_series(1, 1000) as i;

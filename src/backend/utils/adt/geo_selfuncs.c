@@ -119,14 +119,12 @@ areajoinsel(PG_FUNCTION_ARGS)
 /*
 	The first histogram is expected to be the smallest one.
 */
-float 
+float
 compute_join_cardinality_estimation(TypeCacheEntry *typcache, Datum *hist1_values, int nvalues1, Datum *hist2_values, int nvalues2) {
-
 	RangeBound lower1, upper1, lower2, upper2;
-	float selec = 0;
 	bool empty;
 	int overlaps_count = 0;
-	
+ 
 	for (int iter1 = 0; iter1 < nvalues1; iter1++) {
 
 		range_deserialize(typcache, DatumGetRangeTypeP(hist1_values[iter1]), &lower1, &upper1, &empty);
@@ -139,11 +137,9 @@ compute_join_cardinality_estimation(TypeCacheEntry *typcache, Datum *hist1_value
 			if (range_cmp_bounds(typcache, &(upper1), &(lower2)) >= 0 && range_cmp_bounds(typcache, &(upper2), &(lower1)) >= 0) {
 				overlaps_count++;
 			}
-			
 		}
 	}
-
-	return overlaps_count / (float) (nvalues1 * nvalues2);
+ 	return overlaps_count / (float) (nvalues1 * nvalues2);
 }
 
 float

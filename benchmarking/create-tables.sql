@@ -58,30 +58,38 @@ END;
 $$ language 'plpgsql' STRICT;
 
 -- Function to generate random tsrange (timestamp range) between now - low (days) and now + high (days)
-CREATE OR REPLACE FUNCTION random_tsrange(low INT, high INT) 
+CREATE OR REPLACE FUNCTION random_tsrange(low INT, high INT)
    RETURNS tsrange AS
 $$
 DECLARE
-   rand_low int := random_int(-abs(low), 0);
-   rand_high int := random_int(0, abs(high));
-   b1 timestamp := now() - make_interval(days => abs(low)) - make_interval(secs => random_int(0, 86000));
-   b2 timestamp := now() + make_interval(days => abs(high)) + make_interval(secs => random_int(0, 86000));
+   rand_low int := random_int(-abs(low), abs(high));
+   rand_high int := random_int(-abs(low), abs(high));
+   b1 timestamp := now() + make_interval(days => rand_low) + make_interval(secs => random_int(-45000, 45000));
+   b2 timestamp := now() + make_interval(days => rand_high) + make_interval(secs => random_int(-45000, 45000));
 BEGIN
-   return tsrange(b1, b2); 
+   if (b1 > b2) then
+      return tsrange(b2, b1);
+   else
+      return tsrange(b1, b2);
+   end if;
 END;
 $$ language 'plpgsql' STRICT;
 
 -- Function to generate random date range between now - low (days) and now + high (days)
-CREATE OR REPLACE FUNCTION random_daterange(low INT, high INT) 
+CREATE OR REPLACE FUNCTION random_daterange(low INT, high INT)
    RETURNS daterange AS
 $$
 DECLARE
-   rand_low int := random_int(-abs(low), 0);
-   rand_high int := random_int(0, abs(high));
-   b1 date := now() - make_interval(days => abs(low));
-   b2 date := now() + make_interval(days => abs(high));
+   rand_low int := random_int(-abs(low), abs(high));
+   rand_high int := random_int(-abs(low), abs(high));
+   b1 date := now() + make_interval(days => rand_low);
+   b2 date := now() + make_interval(days => rand_high);
 BEGIN
-  return daterange(b1, b2); 
+   if (b1 > b2) then
+      return daterange(b2, b1);
+   else
+      return daterange(b1, b2);
+   end if;
 END;
 $$ language 'plpgsql' STRICT;
 
